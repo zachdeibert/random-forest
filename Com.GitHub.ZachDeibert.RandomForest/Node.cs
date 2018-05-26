@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Com.GitHub.ZachDeibert.RandomForest {
     [Serializable]
@@ -67,16 +68,21 @@ namespace Com.GitHub.ZachDeibert.RandomForest {
                 LessClass = bestLess.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
                 GreaterClass = bestGreater.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
             } else {
-                if (bestLess.Length > parameters.MinFeatures) {
-                    Less = new Node(bestLess, random, parameters, depth + 1);
-                } else {
-                    LessClass = bestLess.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
-                }
-                if (bestGreater.Length > parameters.MinFeatures) {
-                    Greater = new Node(bestGreater, random, parameters, depth + 1);
-                } else {
-                    GreaterClass = bestGreater.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
-                }
+                Task less = Task.Run(() => {
+                    if (bestLess.Length > parameters.MinFeatures) {
+                        Less = new Node(bestLess, random, parameters, depth + 1);
+                    } else {
+                        LessClass = bestLess.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
+                    }
+                });
+                Task greater = Task.Run(() => {
+                    if (bestGreater.Length > parameters.MinFeatures) {
+                        Greater = new Node(bestGreater, random, parameters, depth + 1);
+                    } else {
+                        GreaterClass = bestGreater.GroupBy(d => d.Classification).OrderByDescending(g => g.Count()).First().Key;
+                    }
+                });
+                Task.WaitAll(less, greater);
             }
         }
     }
